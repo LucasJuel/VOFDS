@@ -10,6 +10,8 @@ class sat_tb_env(uvm_env):
         self.virtual_sequencer = None
 
     def build_phase(self):
+        super().build_phase()
+        
         self.cfg = ConfigDB().get(self, "", "cfg")
         ConfigDB().set(self, "virtual_sequencer", "cfg", self.cfg)
         self.virtual_sequencer = sat_tb_virt_sequencer.create(
