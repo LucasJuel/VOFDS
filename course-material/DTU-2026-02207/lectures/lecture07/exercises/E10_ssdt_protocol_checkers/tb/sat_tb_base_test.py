@@ -4,7 +4,8 @@ import cocotb
 import pyuvm
 import vsc
 from cocotb.clock import Clock
-from cocotb.triggers import ReadOnly, RisingEdge
+from cocotb.types import LogicArray
+from cocotb.triggers import ReadOnly, RisingEdge, FallingEdge
 from pyuvm import ConfigDB, uvm_report_object, uvm_root, uvm_test
 
 from sat_coverage import covergroup_sat
@@ -54,6 +55,9 @@ class sat_tb_base_test(uvm_test):
         self.ssdt_prod_if = None
         self.ssdt_cons_if = None
 
+        # Create the variables that will hold the handlers for assertion check
+        self.producer_assert_check = None
+        self.consumer_assert_check = None
 
         # Saturation filter coverage - OVF
         self.sat_cov = None
@@ -77,7 +81,20 @@ class sat_tb_base_test(uvm_test):
         self.cfg.ssdt_prod_cfg.vif = self.ssdt_prod_if
         self.cfg.ssdt_cons_cfg.vif = self.ssdt_cons_if
 
+        # Connect the checkers to the handlers
+        self.producer_assert_check = ssdt_interface_assert_check(
+            clk = self.dut.clk, 
+            rst = self.dut.rst,
+            data = self.dut.in_data,
+            valid = self.dut.in_valid
+        )
 
+        self.consumer_assert_check = ssdt_interface_assert_check(
+            clk = self.dut.clk,
+            rst = self.dut.rst,
+            data = self.dut.out_data,
+            valid = self.dut.out_valid
+        )
 
         # Instantiate Environment
         self.tb_env = sat_tb_env.create(name="sat_tb_env", parent=self)
@@ -123,12 +140,19 @@ class sat_tb_base_test(uvm_test):
         clock = Clock(self.ssdt_prod_if.clk, 2, unit="ns")
         clock.start()
 
+
         # Reset input values
         self.ssdt_prod_if.data.value = 0
         self.ssdt_prod_if.valid.value = 0
 
+        self.producer_assert_check.check_assertions()
+        self.consumer_assert_check.check_assertions()
+
+        await RisingEdge(self.ssdt_prod_if.clk)
+
         # Reset device
         self.ssdt_prod_if.rst.value = 1
+        await RisingEdge(self.ssdt_prod_if.clk)
         await RisingEdge(self.ssdt_prod_if.clk)
         self.ssdt_prod_if.rst.value = 0
 
@@ -140,6 +164,10 @@ class sat_tb_base_test(uvm_test):
     def report_phase(self):
         self.logger.debug("report_phase() Base Test")
         super().report_phase()
+
+        assert self.producer_assert_check.passed, "Producer sSDT protocol check failed"
+        assert self.consumer_assert_check.passed, "Consumer sSDT protocol check failed"
+
 
         # Creating coverage report with PyVSC
         self.create_pyvsc_coverage_report()
