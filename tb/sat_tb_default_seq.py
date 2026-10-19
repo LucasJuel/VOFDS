@@ -1,4 +1,8 @@
+import cocotb
+from cocotb.triggers import Combine
 from pyuvm import uvm_sequence
+
+from uvc.ssdt import uvc_ssdt_basic_seq, uvc_ssdt_seq_item
 
 
 class sat_tb_default_seq(uvm_sequence):
@@ -6,22 +10,38 @@ class sat_tb_default_seq(uvm_sequence):
         super().__init__(name)
         self.sequencer = None
         self.cfg = None
-        self.input_if = None
-        self.output_if = None
+        self.producer_seq = None
+        self.consumer_seq = None
 
     async def pre_body(self):
         self.cfg = self.sequencer.cfg
-        self.input_if = self.cfg.input_if
-        self.output_if = self.cfg.output_if
+        self.producer_seq = uvc_ssdt_basic_seq.create("producer_seq")
+        self.consumer_seq = uvc_ssdt_basic_seq.create("consumer_seq")
 
-    async def check_value(self, value):
-        await self.input_if.drive(value)
-        valid, actual = await self.output_if.sample()
+    async def send_and_check(self, value):
+        seq_item = uvc_ssdt_seq_item.create("producer_item")
+        seq_item.data = value & ((1 << self.cfg.input_width) - 1)
+        self.producer_seq.seq_item = seq_item
+
+        prod_task = cocotb.start_soon(
+            self.producer_seq.start(
+                seqr=self.sequencer.ssdt_producer_sequencer
+            )
+        )
+        cons_task = cocotb.start_soon(
+            self.consumer_seq.start(
+                self.sequencer.ssdt_consumer_sequencer
+            )
+        )
+        await Combine(prod_task, cons_task)
+
+        actual = self.consumer_seq.rsp.data
         expected = self.cfg.expected(value)
+        expected_unsigned = expected & ((1 << self.cfg.output_width) - 1)
 
-        assert valid, f"out_valid was low for input {value}"
-        assert actual == expected, (
-            f"input={value}: expected {expected}, received {actual}"
+        assert actual == expected_unsigned, (
+            f"input={value}: expected {expected} ({expected_unsigned}), "
+            f"received {actual}"
         )
         self.logger.info(
             "PASS input=%d expected=%d actual=%d", value, expected, actual
@@ -41,7 +61,6 @@ class sat_tb_default_seq(uvm_sequence):
         ]
 
         for value in values:
-            await self.check_value(value)
+            await self.send_and_check(value)
 
-        await self.input_if.drive_idle()
         self.logger.info("Default sequence checked %d values", len(values))

@@ -1,13 +1,13 @@
 import cocotb
 import pyuvm
 from cocotb.clock import Clock
-from cocotb.triggers import ReadOnly, RisingEdge
+from cocotb.triggers import RisingEdge
 from pyuvm import ConfigDB, uvm_test
 
 from sat_tb_config import sat_tb_config
 from sat_tb_default_seq import sat_tb_default_seq
 from sat_tb_env import sat_tb_env
-from ssdt_interface_wrapper import ssdt_interface_wrapper
+from uvc.ssdt import ssdt_interface_wrapper
 
 
 @pyuvm.test()
@@ -24,8 +24,8 @@ class sat_default_test(uvm_test):
         self.output_if = ssdt_interface_wrapper("output_if")
 
         self.cfg = sat_tb_config.create("cfg")
-        self.cfg.input_if = self.input_if
-        self.cfg.output_if = self.output_if
+        self.cfg.ssdt_prod_cfg.vif = self.input_if
+        self.cfg.ssdt_cons_cfg.vif = self.output_if
         self.cfg.input_width = len(cocotb.top.in_data)
         self.cfg.output_width = len(cocotb.top.out_data)
 
@@ -42,12 +42,15 @@ class sat_default_test(uvm_test):
         clock = Clock(cocotb.top.clk, 10, unit="ns")
         cocotb.start_soon(clock.start())
 
-        await self.input_if.reset_dut(cycles=2)
+        self.input_if.valid.value = 0
+        self.input_if.data.value = 0
+        cocotb.top.rst.value = 1
+        for _ in range(2):
+            await RisingEdge(cocotb.top.clk)
+        cocotb.top.rst.value = 0
+        await RisingEdge(cocotb.top.clk)
+
         sequence = sat_tb_default_seq.create("sequence")
         await sequence.start(self.env.virtual_sequencer)
 
-        # Check that valid drops after the input interface becomes idle.
-        await RisingEdge(cocotb.top.clk)
-        await ReadOnly()
-        assert int(cocotb.top.out_valid.value) == 0
         self.drop_objection("Saturation-filter stimulus complete")

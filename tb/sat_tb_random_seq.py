@@ -13,7 +13,6 @@ class sat_tb_random_seq(sat_tb_default_seq):
         count = int(os.getenv("SAT_RANDOM_COUNT", "100"))
         rng = random.Random(seed)
 
-        # Always include values around both clipping boundaries.
         values = [
             self.cfg.saturation_min - 1,
             self.cfg.saturation_min,
@@ -28,9 +27,8 @@ class sat_tb_random_seq(sat_tb_default_seq):
         )
 
         for value in values:
-            await self.check_value(value)
+            await self.send_and_check(value)
 
-        await self.input_if.drive_idle()
         self.logger.info(
             "Random sequence checked %d values with seed %d", len(values), seed
         )
