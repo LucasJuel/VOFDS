@@ -22,10 +22,11 @@ class sat_tb_env(uvm_env):
 
         self.ref_model = None
 
-
         # Create empty handles for the producer and consumer agents.
         self.uvc_ssdt_producer = None
         self.uvc_ssdt_consumer = None
+
+        self.scoreboard = None
 
     def build_phase(self):
         self.logger.debug("Start build_phase() -> SAT environment")
@@ -43,6 +44,12 @@ class sat_tb_env(uvm_env):
             name   = "sat_tb_top_seqr",
             parent = self,
         )
+
+        self.scoreboard = sat_tb_scoreboard(
+            name = "sat_filter_scoreboard",
+            parent = self
+        )
+
         # Propagate config to vseqr
         ConfigDB().set(
             context     = self,
@@ -103,6 +110,9 @@ class sat_tb_env(uvm_env):
         # Connect the consumer agent's sequencer to the corresponding virtual
         # sequencer handle.
         self.virtual_sequencer.ssdt_consumer_sequencer = self.uvc_ssdt_consumer.sequencer
+
+        self.uvc_ssdt_consumer.analysis_port.connect(self.scoreboard.uvc_ssdt_consumer_fifo.analysis_export)
+        self.ref_model.analysis_port.connect(self.scoreboard.ref_model_fifo.analysis_export)
 
 
         # Connect producer agent analysis port with ref. model

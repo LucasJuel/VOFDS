@@ -36,10 +36,22 @@ class sat_tb_scoreboard(uvm_scoreboard):
 
         await super().run_phase()
 
+        while True:
+            ref_value = await self.ref_model_fifo.get()
+            real_value = await self.uvc_ssdt_consumer_fifo.get()
+
+            if ref_value == real_value:
+                self.succes += 1
+            else:
+                self.failure += 1
+                print(f"Reference value is not {real_value}, it was {ref_value}")
+
 
     # Report the results of the comparisons
     def check_phase(self):
         super().check_phase()
+        print(f"SCOREBOARD: successes={self.succes}, failures={self.failure}")
+        assert self.failure == 0, "There were more than 0 failures"
 
 
     def log_items(self, consumer_item, ref_model_item):
