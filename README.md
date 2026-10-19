@@ -5,6 +5,14 @@ structure requested in the handout: a testbench configuration, environment,
 virtual sequencer, default virtual sequence, random virtual sequence, and a
 factory override in the random test.
 
+## Course material
+
+The `course-material/DTU-2026-02207/` directory is a copy of the tracked files
+in the local DTU course repository (`syosil/DTU-2026-02207`, commit `970fe01`).
+It includes the local, uncommitted version of the Exercise 10 protocol checker
+as it existed when this copy was made. The files at the root of this repository
+remain the separate Exercise 06/07 implementation described below.
+
 ## Assumed DUT behavior
 
 The handout does not provide the original DUT or its numerical specification,
