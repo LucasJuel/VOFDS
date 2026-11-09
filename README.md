@@ -19,19 +19,19 @@ assignment_description.md   # Summary of the MARB assignment tasks (A1–A8)
 
 ## Setup
 
-Requires Python 3, a virtual environment, and Icarus Verilog (or another
-supported simulator).
+Requires **Python 3.12** and **Icarus Verilog** (`iverilog`).
+
+Some dependencies (PyBoolector, pyvsc) don't build on Python 3.13+, so 3.12 is
+required.
 
 ```sh
-# Clone with submodule
 git clone --recurse-submodules git@github.com:LucasJuel/VOFDS.git
 cd VOFDS
-
-# Create venv and install dependencies
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r course-material/DTU-2026-02207/bin/requirements.txt
+./setup.sh
 ```
+
+The script finds `python3.12`, creates a `.venv`, and installs everything. If
+Python 3.12 or iverilog is missing it tells you how to install them.
 
 ## Running the assignment (Memory Arbiter)
 
@@ -44,13 +44,13 @@ make
 This runs the default test (`cl_marb_basic_test`) against the `mem_arb_wrapper`
 DUT using cocotb + Icarus Verilog.
 
-To run a specific test:
+Run a specific test:
 
 ```sh
 make COCOTB_TEST_MODULES=tests.cl_marb_<test_name>
 ```
 
-To view coverage:
+View coverage:
 
 ```sh
 make coverage

@@ -1,0 +1,17 @@
+# Patched version of course-material/DTU-2026-02207/bin/requirements.txt
+# PyBoolector has broken version metadata on PyPI — use --no-build-isolation
+# Requires Python <=3.12 (PyBoolector/pyvsc don't build on 3.13+)
+
+cocotb == 2.0.0
+pyuvm == 4.0.1
+pyvsc == 0.8.8.*
+PyBoolector >= 3.2.4
+cocotb-coverage == 1.1.0
+constrainedrandom == 1.1.2
+pytest == 8.1
+
+pyucis == 0.1.5
+pyucis-viewer == 0.0.4.*
+matplotlib == 3.10.3
+
+PyQt5 >= 5.15.10
