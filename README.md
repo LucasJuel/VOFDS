@@ -1,74 +1,72 @@
-# Saturation Filter PyUVM exercise
+# 02207 Verification of Digital Systems
 
-This is a self-contained implementation of Exercise 06. It has the class
-structure requested in the handout: a testbench configuration, environment,
-virtual sequencer, default virtual sequence, random virtual sequence, and a
-factory override in the random test.
+Course repo for DTU 02207. Contains our exercise solutions and the final
+assignment (Memory Arbiter verification).
 
-## Course material
+## Repository structure
 
-The `course-material/DTU-2026-02207/` directory is a copy of the tracked files
-in the local DTU course repository (`syosil/DTU-2026-02207`, commit `970fe01`).
-It includes the local, uncommitted version of the Exercise 10 protocol checker
-as it existed when this copy was made. The files at the root of this repository
-remain the separate Exercise 06/07 implementation described below.
-
-## Assumed DUT behavior
-
-The handout does not provide the original DUT or its numerical specification,
-so this project makes the assumptions explicit:
-
-- `in_data` is a signed 16-bit value.
-- `out_data` is a signed 8-bit value.
-- Values are clamped to the output range `-128..127`.
-- A valid input produces a registered valid output on the same rising edge
-  (one sequential processing stage).
-- `rst` is synchronous and active high.
-
-The widths are parameters in `rtl/saturation_filter.sv`; the Python reference
-model discovers the actual signal widths automatically.
-
-## Structure
-
-```text
-rtl/saturation_filter.sv
-tb/ssdt_interface_wrapper.py
-tb/sat_tb_config.py
-tb/sat_tb_virt_sequencer.py
-tb/sat_tb_env.py
-tb/sat_tb_default_seq.py
-tb/sat_tb_random_seq.py
-tb/sat_default_test.py
-tb/sat_random_test.py
+```
+course-material/       # Submodule → github.com/Pakkutaq/DTU-2026-02207
+  assignment/
+    marb/              # ← Assignment: Memory Arbiter testbench (work here)
+      src/rtl/         # DUT (SystemVerilog)
+      src/tb/          # Testbench (pyUVM / cocotb)
+  lectures/            # Lecture slides, exercises, reference material
+exercises/
+  E06_sat_pyuvm_env_vseq/   # Our saturation filter exercise (E06/E07)
+assignment_description.md   # Summary of the MARB assignment tasks (A1–A8)
 ```
 
-## Setup and execution
+## Setup
 
-Install a supported simulator first. On macOS with Homebrew, Icarus Verilog is
-the smallest option:
+Requires Python 3, a virtual environment, and Icarus Verilog (or another
+supported simulator).
 
 ```sh
-brew install icarus-verilog
+# Clone with submodule
+git clone --recurse-submodules git@github.com:LucasJuel/VOFDS.git
+cd VOFDS
+
+# Create venv and install dependencies
 python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install -r requirements.txt
+pip install -r course-material/DTU-2026-02207/bin/requirements.txt
 ```
 
-Run the deterministic boundary test:
+## Running the assignment (Memory Arbiter)
 
 ```sh
+source .venv/bin/activate
+cd course-material/DTU-2026-02207/assignment/marb/src/tb
 make
 ```
 
-Run the random test:
+This runs the default test (`cl_marb_basic_test`) against the `mem_arb_wrapper`
+DUT using cocotb + Icarus Verilog.
+
+To run a specific test:
 
 ```sh
-make random
+make COCOTB_TEST_MODULES=tests.cl_marb_<test_name>
 ```
 
-The random test defaults to 100 random values and a repeatable seed. Override
-them when needed:
+To view coverage:
 
 ```sh
-SAT_RANDOM_COUNT=1000 SAT_SEED=123 make random
+make coverage
+```
+
+## Updating course material
+
+The `course-material/` submodule points at our fork. To pull upstream changes:
+
+```sh
+cd course-material/DTU-2026-02207
+git remote add upstream git@github.com:syosil/DTU-2026-02207.git  # only once
+git fetch upstream
+git merge upstream/main
+git push origin main
+cd ../..
+git add course-material/DTU-2026-02207
+git commit -m "Update course material"
 ```
