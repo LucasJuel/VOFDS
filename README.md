@@ -37,7 +37,6 @@ Python 3.12 or iverilog is missing it tells you how to install them.
 
 ```sh
 source .venv/bin/activate
-cd course-material/DTU-2026-02207/assignment/marb/src/tb
 make
 ```
 
@@ -55,6 +54,28 @@ View coverage:
 ```sh
 make coverage
 ```
+
+## Working in the submodule (course-material)
+
+The assignment lives inside `course-material/`, which is a git submodule (its
+own repo). Changes there need to be committed and pushed separately:
+
+```sh
+# 1. Commit and push inside the submodule
+cd course-material/DTU-2026-02207
+git add .
+git commit -m "your message"
+git push origin main
+
+# 2. Update the outer repo to track the new submodule commit
+cd ../..
+git add course-material/DTU-2026-02207
+git commit -m "Update course-material"
+git push
+```
+
+Both pushes are needed — the submodule push sends your code to the fork, the
+outer push tells everyone else which submodule commit to check out.
 
 ## Updating course material
 
