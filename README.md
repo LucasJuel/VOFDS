@@ -55,6 +55,16 @@ View coverage:
 make coverage
 ```
 
+## Pulling changes
+
+```sh
+git pull
+git submodule update
+```
+
+Always run both — `git pull` updates the outer repo, `git submodule update`
+syncs the course-material folder to match.
+
 ## Working in the submodule (course-material)
 
 The assignment lives inside `course-material/`, which is a git submodule (its
